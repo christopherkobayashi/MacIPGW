@@ -39,14 +39,17 @@
 #include <netatalk/at.h>
 #include <atalk/ddp.h>
 #include <atalk/atp.h>
+
+/*
+ * atp_internals.h declares a few functions we require; they are exported in
+ * libatalk, but not declared in any public header file.  atp_internals.h
+ * has been copied over from netatalk-2.2.4.
+ */
 #include "atp_internals.h"
 
 #ifdef EBUG
 #include <stdio.h>
 #endif
-
-extern int at_addr_eq (struct sockaddr_at *paddr, struct sockaddr_at *saddr);
-extern int free_buf (struct atpbuf *bp);
 
 /*#define EBUG    
 */
@@ -54,8 +57,8 @@ extern int free_buf (struct atpbuf *bp);
 int atp_input(ATP ah, struct sockaddr_at *faddr, char *rbuf, int recvlen) {
 	struct atpbuf		*pq, *cq;
 	struct atphdr		ahdr;
-	u_short				rfunc;
-	u_short				rtid;
+	uint16_t				rfunc;
+	uint16_t				rtid;
 	int					i;
 	struct atpbuf		*inbuf;
 
@@ -89,19 +92,18 @@ int atp_input(ATP ah, struct sockaddr_at *faddr, char *rbuf, int recvlen) {
 					pq->atpbuf_next = cq->atpbuf_next;
 				}
 				for ( i = 0; i < 8; ++i ) {
-					if ( cq->atpbuf_info.atpbuf_xo.atpxo_packet[ i ]
-								!= NULL ) {
-						free_buf ( cq->atpbuf_info.atpbuf_xo.atpxo_packet[ i ] );
+					if (cq->atpbuf_info.atpbuf_xo.atpxo_packet[i] != NULL) {
+						atp_free_buf(cq->atpbuf_info.atpbuf_xo.atpxo_packet[i]);
 					}
 				}
-				free_buf( cq );
+				atp_free_buf(cq);
 			}
 		} else {
 			/* add packet to incoming queue */
 #ifdef EBUG
 		printf( "<%d> queuing incoming...\n", getpid() );
 #endif
-			if (( inbuf = alloc_buf()) == NULL ) {
+			if (( inbuf = atp_alloc_buf() ) == NULL ) {
 #ifdef EBUG
 		printf( "<%d> can't alloc buffer\n", getpid() );
 #endif
@@ -120,5 +122,3 @@ int atp_input(ATP ah, struct sockaddr_at *faddr, char *rbuf, int recvlen) {
 
 	return -1; /* invalid packet */
 }
-
-

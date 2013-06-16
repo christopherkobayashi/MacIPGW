@@ -80,23 +80,23 @@
 #define ASSIGN_FIXED  (2)
 
 struct macip_req_control {
-	short		mipr_version;
-	short		_mipr_pad1;
-	u_long		mipr_function;
-};
+	uint16_t	mipr_version;
+	uint16_t	_mipr_pad1;
+	uint32_t	mipr_function;
+} __attribute__((__packed__));
 
 struct macip_req_data {
-	u_long		mipr_ipaddr;
-	u_long		mipr_nameserver;
-	u_long		mipr_broadcast;
-	u_long		_mipr_pad2;
-	u_long		mipr_subnet;
-};
+	uint32_t	mipr_ipaddr;
+	uint32_t	mipr_nameserver;
+	uint32_t	mipr_broadcast;
+	uint32_t	_mipr_pad2;
+	uint32_t	mipr_subnet;
+} __attribute__((__packed__));
 
 struct macip_req {
 	struct macip_req_control	miprc;
 	struct macip_req_data		miprd;
-};
+} __attribute__((__packed__));
 
 struct ipent {
 	int					assigned;
@@ -106,11 +106,11 @@ struct ipent {
 };
 
 struct macip_data {
-	u_long			net;
-	u_long			mask;
-	u_long			broadcast;
-	u_long			nameserver;
-	u_long			addr;
+	uint32_t		net;
+	uint32_t		mask;
+	uint32_t		broadcast;
+	uint32_t		nameserver;
+	uint32_t		addr;
 	int				nipent;
 	struct ipent	*ipent;
 	
@@ -136,11 +136,11 @@ static struct zones			gZones;
 static outputfunc_t			gOutput;
 
 
-static u_short 
+static uint16_t 
 cksum (char *buffer, int len)
 {
-	u_short *b = (u_short *)buffer;
-	u_long sum = 0;
+	uint16_t *b = (uint16_t *)buffer;
+	uint32_t sum = 0;
 	
 	len /= 2;
 	while (len--) {
@@ -153,7 +153,7 @@ cksum (char *buffer, int len)
 
 
 static void 
-icmp_echo (u_long src, u_long dst)
+icmp_echo (uint32_t src, uint32_t dst)
 {
 	char		buffer[500];
 	struct ip	*ip = (struct ip *)buffer;
@@ -188,7 +188,7 @@ static long now (void) {
 }
 
 
-struct ipent *get_ipent(u_long ip) {
+struct ipent *get_ipent(uint32_t ip) {
 	return (ip-gMacip.net > 0 && ip-gMacip.net < gMacip.nipent) ?
 		&gMacip.ipent[ip-gMacip.net-1] : 0;
 }
@@ -197,7 +197,7 @@ struct ipent *get_ipent(u_long ip) {
  * aquire a new ip address from the pool
  */
 
-static u_long lease_ip () {
+static uint32_t lease_ip () {
 	int i;
 	
 	for (i=0; i < gMacip.nipent; i++) {
@@ -217,7 +217,7 @@ static u_long lease_ip () {
  * find AT address for an IP address 
  */
 
-static int arp_lookup (struct sockaddr_at *sat, u_long ip) {
+static int arp_lookup (struct sockaddr_at *sat, uint32_t ip) {
 	int				i;
 	char			s[32];
 	struct ipent	*e = get_ipent (ip);
@@ -244,7 +244,7 @@ static int arp_lookup (struct sockaddr_at *sat, u_long ip) {
  * Set AT address from received packet
  */
 
-static void arp_set (u_long ip, struct sockaddr_at *sat) {
+static void arp_set (uint32_t ip, struct sockaddr_at *sat) {
 	struct ipent	*e;
 
 	e = get_ipent (ip);
@@ -267,7 +267,7 @@ static void arp_set (u_long ip, struct sockaddr_at *sat) {
 static void arp_input (struct sockaddr_at *sat, char *buffer, int len) {
 	struct nbpnve *nve;
 	char			s[32];
-	u_long			ip;
+	uint32_t			ip;
 	
 	while ((nve = nbp_parse_lkup_repl (buffer, len)) != NULL) {
 		if (gDebug & DEBUG_MACIP)
@@ -323,7 +323,7 @@ void macip_output (char *buffer, int len) {
 			printf ("macip_output: packet to large, dropped.\n");
 		return;
 		/*	actually, we could fragment here, but this should never happen,
-			as the MTU for the tunnel should be small enought.
+			as the MTU for the tunnel should be small enough.
 		*/
 	}
 	if (arp_lookup (&sat, ntohl(ip->ip_dst.s_addr)) ) {
@@ -352,7 +352,7 @@ static void config_input (ATP atp, struct sockaddr_at *faddr, char *packet, int 
 	char				buffer[600];
 	struct macip_req	*rq;
 	int 				f;
-	u_long				ip;
+	uint32_t				ip;
 
 	if (atp_input (atp, faddr, packet, len) < 0) {
 		if (gDebug & DEBUG_MACIP)
@@ -392,9 +392,9 @@ static void config_input (ATP atp, struct sockaddr_at *faddr, char *packet, int 
 	bzero (rq, sizeof (struct macip_req));
 	switch (f) {
 		case MACIP_ASSIGN:
-			rq->miprc.mipr_version  = htonl(1);
+			rq->miprc.mipr_version  = htons(1U);
 			if ((ip = lease_ip ())) {
-				rq->miprc.mipr_function = htonl(1);
+				rq->miprc.mipr_function = htonl(1U);
 
 				rq->miprd.mipr_ipaddr     = htonl(ip);
 				rq->miprd.mipr_nameserver = htonl(gMacip.nameserver);
@@ -410,16 +410,16 @@ static void config_input (ATP atp, struct sockaddr_at *faddr, char *packet, int 
 			break;
 
 		case MACIP_SERVER:
-			rq->miprc.mipr_version  = htonl(1);
-			rq->miprc.mipr_function = htonl(3);
+			rq->miprc.mipr_version  = htons(1U);
+			rq->miprc.mipr_function = htonl(3U);
 			len = sizeof (struct macip_req_control);
 			break;
 			
 		default:
 			if (gDebug & DEBUG_MACIP)
 				printf ("macip_input: unknown request #%d received; ignored.\n", f);
-			rq->miprc.mipr_version  = htonl(1);
-			rq->miprc.mipr_function = htonl(0);
+			rq->miprc.mipr_version  = htons(1U);
+			rq->miprc.mipr_function = htonl(0U);
 			len = sizeof (struct macip_req_control);
 	}
 	iov.iov_base = buffer;
@@ -439,7 +439,8 @@ static void config_input (ATP atp, struct sockaddr_at *faddr, char *packet, int 
 void macip_input (void) {
 	struct sockaddr_at	sat;
 	char				buffer[800];
-	int					len, flen;
+	ssize_t				len;
+	socklen_t			flen;
 
 	bzero (&sat, sizeof (sat));
 	sat.sat_len = sizeof(struct sockaddr_at);
@@ -452,7 +453,7 @@ void macip_input (void) {
 	if ((len=recvfrom (gMacip.sock, buffer, ATP_BUFSIZ, 
 			0, (struct sockaddr *)&sat, &flen)) > 0) {
 		if (gDebug & DEBUG_MACIP)
-			printf ("macip_input: packet: DDP=%d, len=%d\n", *buffer, len);
+			printf ("macip_input: packet: DDP=%d, len=%ld\n", *buffer, len);
 		switch (*buffer) {	/*DDPTYPE*/
 			case DDPTYPE_NBP:
 				arp_input(&sat, buffer, len);
@@ -463,7 +464,6 @@ void macip_input (void) {
 			case DDPTYPE_MACIP:
 				ip_input(&sat, buffer+1, len-1);
 				break;
-			default:
 		}
 	} else {
 		perror ("recvfrom");
@@ -471,7 +471,7 @@ void macip_input (void) {
 }
 
 
-static int init_ip (u_long net, u_long mask, u_long nameserver) {
+static int init_ip (uint32_t net, uint32_t mask, uint32_t nameserver) {
 	bzero (&gMacip, sizeof(gMacip));
 	gMacip.net        = net;
 	gMacip.mask       = mask;
@@ -525,7 +525,7 @@ static int get_zones (void) {
 	gZones.n = 0;
 
 	reqdata[ 0 ] = ZIPOP_GETZONELIST;
-	if (( ah = atp_open( 0 )) == NULL ) {
+	if (( ah = atp_open( 0, NULL )) == NULL ) {
 		perror( "atp_open" );
 		return -1;
 	}
@@ -624,14 +624,14 @@ void macip_idle (void) {
 
 
 int
-macip_open (char *zone, u_long net, u_long mask, u_long ns, outputfunc_t o) {
+macip_open (char *zone, uint32_t net, uint32_t mask, uint32_t ns, outputfunc_t o) {
 	if (init_ip (net, mask, ns)) {
 		if (gDebug & DEBUG_MACIP)
 			printf ("macip_open: init_ip failed.\n");
 		return -1;
 	}
-	
-	if ((gMacip.atp=atp_open(0)) == NULL) {
+
+	if ((gMacip.atp=atp_open(0, NULL)) == NULL) {
 		if (gDebug & DEBUG_MACIP)
 			perror ("macip_open: atp_open");
 		return -1;
@@ -668,6 +668,6 @@ macip_open (char *zone, u_long net, u_long mask, u_long ns, outputfunc_t o) {
 
 
 void macip_close (void) {
-	nbp_unrgstr( gMacip.name, gMacip.type, gMacip.zone);
+	nbp_unrgstr( gMacip.name, gMacip.type, gMacip.zone, NULL);
 	close (gMacip.sock);
 }

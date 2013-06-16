@@ -92,7 +92,7 @@ int nbp_lookup_req (int s, char *name, char *type, char *zone) {
 	static int			rqid = 1;
 	static int			nbp_port = 0;
 	struct sockaddr_at	addr;
-	int					i;
+	socklen_t			i;
 	char				buffer[500];
 	char				*p = buffer;
 	struct nbphdr		nh;

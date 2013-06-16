@@ -33,7 +33,11 @@ MANDIR=		/man/man
 SRCS=	main.c macip.c atp_input.c nbp_lkup_async.c \
 	tunnel.c util.c
 
-COPTS=	-g -Wall -I/usr/local/include -O2 #-DDEBUG
+COPTS=	-g -Wall -I/usr/local/include -O2
+
+.if defined(DEBUG)
+COPTS+=	-DDEBUG
+.endif
 
 LDADD=	-L/usr/local/lib -latalk
 

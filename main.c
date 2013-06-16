@@ -57,7 +57,7 @@
 #include "tunnel.h"
 #include "util.h"
 
-static char *version = "macipgw 1.0\n"
+static char *version = "macipgw 1.1\n"
 		"Copyright (c) 1997 Stefan Bethke. All rights reserved.\n"
 		"Copyright (c) 1988, 1992, 1993\n"
 		"\tThe Regents of the University of California.  All rights reserved.\n"
@@ -161,11 +161,11 @@ void usage (char *c) {
 }
 
 
-void main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 	struct sigaction	sv;
-	u_long			net=0, mask=0, ns=0;
-	char 			*zone = "*";
-	char			c;
+	uint32_t			net=0, mask=0, ns=0;
+	char 				*zone = "*";
+	char				c;
 
 	gDebug = 0;
 
@@ -209,7 +209,7 @@ void main(int argc, char *argv[]) {
 	openlog ("macipgw", LOG_PID | gDebug ? LOG_PERROR : 0, LOG_DAEMON);
 
 	sv.sa_handler = die;
-	sv.sa_mask = 0;
+	sigemptyset(&sv.sa_mask);
 	sv.sa_flags = 0;
 	if (sigaction( SIGTERM, &sv, 0 ) < 0 ) {
 		syslog( LOG_ERR, "sigaction: %m" );
@@ -227,21 +227,20 @@ void main(int argc, char *argv[]) {
 	if (!gDebug)
 		disassociate();
 
-
 	tundev = tunnel_open (net, mask, macip_output);
 	if (tundev < 0) {
-		printf ("could not open tunnel.\n");
+		syslog(LOG_ERR, "could not open tunnel.\n");
 		die (EX_OSERR);
 	}
 	
 	atsocket = macip_open (zone, net, mask, ns, tunnel_output);
 	if (atsocket < 0) {
-		printf ("could not initialise MacIP\n");
+		syslog(LOG_ERR, "could not initialise MacIP\n");
 		die (EX_OSERR);
 	}
 
 	server();
 
-	die (0);
+	return 0;
 }
 

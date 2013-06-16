@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-extern int  macip_open (char *zone, u_long net, u_long mask, u_long ns, outputfunc_t o);
+extern int  macip_open (char *zone, uint32_t net, uint32_t mask, uint32_t ns, outputfunc_t o);
 extern void macip_close (void);
 extern void macip_idle (void);
 
