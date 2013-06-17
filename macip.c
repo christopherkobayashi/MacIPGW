@@ -491,7 +491,7 @@ static int init_ip (uint32_t net, uint32_t mask, uint32_t nameserver) {
 	if (gDebug & DEBUG_MACIP) {
 		printf ("init_ip: network %s/", iptoa(gMacip.net));
 		printf ("%s, ", iptoa(gMacip.mask));
-		printf ("broadcast %s\n\t%d addresses availible\n", 
+		printf ("broadcast %s\n\t%d addresses available\n", 
 			iptoa(gMacip.broadcast), gMacip.nipent - 1);
 		printf ("\tmy ip=%s\n", iptoa(gMacip.net+1));
 	}
