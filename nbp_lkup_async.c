@@ -49,9 +49,7 @@
 #include <sys/signal.h>
 #include <sys/time.h>
 #include <string.h>
-#include <netatalk/endian.h>
 #include <netatalk/at.h>
-/*#include <atalk/nbp.h>*/
 #include <atalk/ddp.h>
 #include <netdb.h>
 
@@ -112,7 +110,9 @@ int nbp_lookup_req (int s, char *name, char *type, char *zone) {
 	p = nbp_addtuple (p, addr, name, type, zone);
 
 	bzero( &addr, sizeof( struct sockaddr_at ));
+#ifdef BSD4_4
 	addr.sat_len = sizeof(struct sockaddr_at);
+#endif
 	addr.sat_family = AF_APPLETALK;
 	addr.sat_addr.s_net = ATADDR_ANYNET;
 	addr.sat_addr.s_node = ATADDR_ANYNODE;

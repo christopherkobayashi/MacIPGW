@@ -35,10 +35,8 @@
 #include <sys/errno.h>
 #include <sys/uio.h>
 
-#include <netatalk/endian.h>
 #include <netatalk/at.h>
 #include <atalk/aep.h>
-/*#include <atalk/nbp.h>*/
 #include <atalk/ddp.h>
 #include <atalk/atp.h>
 
@@ -135,7 +133,7 @@ void disassociate (void) {
 		}
 		if (( i = open( "/dev/tty", O_RDWR )) >= 0 ) {
 			(void)ioctl( i, TIOCNOTTY, 0 );
-			setpgrp( 0, getpid());
+			setpgid( 0, getpid());
 			(void)close( i );
 		}
 		if (( i = open( "/", O_RDONLY )) >= 0 ) {

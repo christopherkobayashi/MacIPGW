@@ -1,8 +1,5 @@
 /*
- *
- * $Id: tunnel.c,v 1.1.1.1 2001/10/28 15:01:50 stefanbethke Exp $
- *
- * (c) 1997 Stefan Bethke. All rights reserved.
+ * (c) 2013, 1997 Stefan Bethke. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,7 +24,6 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/endian.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -36,8 +32,16 @@
 #include <sys/errno.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
+
+#if defined(BSD)
 #include <net/if.h>
 #include <net/if_tun.h>
+#endif
+
+#if defined(__linux__)
+#include <linux/if.h>
+#include <linux/if_tun.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,12 +75,8 @@ tunnel_ifconfig (void) {
 	strlcpy(addr, iptoa(gTunnel.net+1), sizeof(addr));
 	strlcpy(mask, iptoa(gTunnel.mask), sizeof(mask));
 	strlcpy(net, iptoa(gTunnel.net), sizeof(net));
-#if defined(BSD)
 	snprintf(cmd, sizeof(cmd), "/sbin/ifconfig %s inet %s %s up",
 		gTunnel.name, addr, net);
-#else
-#error you need to supplly the ifconfig command line for your operating system
-#endif
 	if (gDebug & DEBUG_TUNNEL)
 		fprintf(stderr, "tunnel_ifconfig: %s\n", cmd);
 	return system(cmd);
@@ -86,22 +86,18 @@ tunnel_ifconfig (void) {
 static int
 tunnel_route (int op, uint32_t net, uint32_t mask, uint32_t gw) {
 	char cmd[2048], saddr[256], smask[256], snet[256];
-	
+
 	strlcpy(saddr, iptoa(gw), sizeof(saddr));
 	strlcpy(smask, iptoa(mask), sizeof(smask));
 	strlcpy(snet, iptoa(net), sizeof(snet));
-#if defined(BSD)
 	snprintf(cmd, sizeof(cmd), "/sbin/route %s -net %s %s %s",
 		op == ROUTE_ADD ? "add" : "delete", snet, saddr, smask);
-#else
-#error you need to supplly the route command line for your operating system
-#endif
 	if (gDebug & DEBUG_TUNNEL)
 		fprintf(stderr, "tunnel_route: %s\n", cmd);
 	return system(cmd);
 }
 
-int 
+int
 tunnel_open (uint32_t net, uint32_t mask, outputfunc_t o) {
 	int					i;
 	char				s[32], *q;

@@ -1,7 +1,6 @@
 #	AppleTalk MacIP Gateway
-# $Id: Makefile,v 1.1.1.1 2001/10/28 15:01:49 stefanbethke Exp $
 #
-# (c) 1997 Stefan Bethke. All rights reserved.
+# (c) 2013, 1997 Stefan Bethke. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -30,18 +29,42 @@ DESTDIR?=	/usr/local
 BINDIR?=	/libexec
 MANDIR=		/man/man
 
-SRCS=	main.c macip.c atp_input.c nbp_lkup_async.c \
-	tunnel.c util.c
+BINOWN?=	root
+BINGRP?=	wheel
+MANOWN?=	root
+MANGRP?=	wheel
 
-COPTS=	-g -Wall -I/usr/local/include -O2
+SRCS=	main.c macip.c atp_input.c nbp_lkup_async.c util.c
+OBJS=	main.o macip.o atp_input.o nbp_lkup_async.o util.o
+MAN=	macipgw.8
+MANGZ=	${MAN}.gz
 
-.if defined(DEBUG)
-COPTS+=	-DDEBUG
-.endif
+SRCS+=	tunnel_bsd.c
+OBJS+=	tunnel_bsd.o
+#SRCS+=	tunnel_linux.c
+#OBJS+=	tunnel_linux.o
 
-LDADD=	-L/usr/local/lib -latalk
+CFLAGS+=	-g -Wall -I/usr/local/include -O2
+CFLAGS+=	-DDEBUG
 
-MAN1=
-MAN8=	macipgw.8
+LDADD=	-latalk
+LDFLAGS+=	-L/usr/local/lib
 
-.include <bsd.prog.mk>
+CLEANFILES+=	${PROG}
+CLEANFILES+=	${OBJS}
+CLEANFILES+=	${MANGZ}
+
+all: ${PROG} ${MANGZ}
+
+${PROG}:	${OBJS}
+	${CC} ${CFLAGS} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
+
+${MANGZ}:	${MAN}
+	gzip -9 <${MAN} >${MANGZ}
+
+clean:
+	rm -f ${CLEANFILES} 
+
+install: ${PROG} ${MANGZ}
+	install -c -m 555 -o ${BINOWN} -g ${BINGRP} -s ${PROG} ${DESTDIR}${BINDIR}
+	install -c -m 444 -o ${MANOWN} -g ${MANGRP} macipgw.8.gz ${DESTDIR}${MANDIR}8

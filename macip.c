@@ -1,9 +1,7 @@
 /*
  * AppleTalk MacIP Gateway
  *
- * $Id: macip.c,v 1.1.1.1 2001/10/28 15:01:49 stefanbethke Exp $
- *
- * (c) 1997 Stefan Bethke. All rights reserved.
+ * (c) 2013, 1997 Stefan Bethke. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,10 +33,8 @@
 #include <sys/errno.h>
 #include <sys/uio.h>
 
-#include <netatalk/endian.h>
 #include <netatalk/at.h>
 #include <atalk/aep.h>
-/*#include <atalk/nbp.h>*/
 #include <atalk/ddp.h>
 #include <atalk/atp.h>
 #include <atalk/zip.h>
@@ -443,7 +439,9 @@ void macip_input (void) {
 	socklen_t			flen;
 
 	bzero (&sat, sizeof (sat));
+#ifdef BSD4_4
 	sat.sat_len = sizeof(struct sockaddr_at);
+#endif
 	sat.sat_family = AF_APPLETALK;
 	sat.sat_addr.s_net = ATADDR_ANYNET;
 	sat.sat_addr.s_node = ATADDR_ANYNODE;
@@ -453,7 +451,7 @@ void macip_input (void) {
 	if ((len=recvfrom (gMacip.sock, buffer, ATP_BUFSIZ, 
 			0, (struct sockaddr *)&sat, &flen)) > 0) {
 		if (gDebug & DEBUG_MACIP)
-			printf ("macip_input: packet: DDP=%d, len=%ld\n", *buffer, len);
+			printf ("macip_input: packet: DDP=%d, len=%zu\n", *buffer, len);
 		switch (*buffer) {	/*DDPTYPE*/
 			case DDPTYPE_NBP:
 				arp_input(&sat, buffer, len);
@@ -530,7 +528,9 @@ static int get_zones (void) {
 		return -1;
 	}
 	bzero( (char *) &saddr, sizeof( struct sockaddr_at ));
+#ifdef BSD4_4
 	saddr.sat_len = sizeof(struct sockaddr_at);
+#endif
 	saddr.sat_family = AF_APPLETALK;
 	if (( se = getservbyname( "zip", "ddp" )) == NULL ) {
 		fprintf( stderr, "Unknown service \"zip/ddp\".\n" );
