@@ -25,9 +25,9 @@
 # SUCH DAMAGE.
 
 PROG=		macipgw
-DESTDIR?=	/usr/local
-BINDIR?=	/libexec
-MANDIR=		/man/man
+DESTDIR?=	/usr/pkg
+BINDIR?=	bin
+MANDIR=		man/man
 
 BINOWN?=	root
 BINGRP?=	wheel
@@ -44,11 +44,11 @@ OBJS+=	tunnel_bsd.o
 #SRCS+=	tunnel_linux.c
 #OBJS+=	tunnel_linux.o
 
-CFLAGS+=	-g -Wall -I/usr/local/include -O2
+CFLAGS+=	-g -Wall -I/usr/local/include -I/usr/pkg/include -O2
 CFLAGS+=	-DDEBUG
 
 LDADD=	-latalk
-LDFLAGS+=	-L/usr/local/lib
+LDFLAGS+=	-L/usr/local/lib -L/usr/pkg/lib
 
 CLEANFILES+=	${PROG}
 CLEANFILES+=	${OBJS}
@@ -66,5 +66,5 @@ clean:
 	rm -f ${CLEANFILES} 
 
 install: ${PROG} ${MANGZ}
-	install -c -m 555 -o ${BINOWN} -g ${BINGRP} -s ${PROG} ${DESTDIR}${BINDIR}
-	install -c -m 444 -o ${MANOWN} -g ${MANGRP} macipgw.8.gz ${DESTDIR}${MANDIR}8
+	install -c -m 555 -o ${BINOWN} -g ${BINGRP} -s ${PROG} ${DESTDIR}/${BINDIR}
+	install -c -m 444 -o ${MANOWN} -g ${MANGRP} macipgw.8.gz ${DESTDIR}/${MANDIR}8

@@ -45,6 +45,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <netdb.h>
+#include <errno.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>

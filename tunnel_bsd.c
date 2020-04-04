@@ -101,7 +101,9 @@ int
 tunnel_open (uint32_t net, uint32_t mask, outputfunc_t o) {
 	int					i;
 	char				s[32], *q;
+#if !defined(__NetBSD__)
 	struct tuninfo		ti;
+#endif
 	
 	gTunnel.dev = 0;
 	for (i=0; i<=9; i++) {
@@ -124,7 +126,8 @@ tunnel_open (uint32_t net, uint32_t mask, outputfunc_t o) {
 	if (gDebug & DEBUG_TUNNEL) {
 		printf ("tunnel_open: %s:%s opened.\n", s, gTunnel.name);
 	}
-	
+
+#if !defined(__NetBSD__)	
 	ti.type = 23;
 	ti.mtu  = 586;		/*	DDP_MAXSZ - 1	*/
 	ti.baudrate = 38400;
@@ -133,6 +136,7 @@ tunnel_open (uint32_t net, uint32_t mask, outputfunc_t o) {
 			perror ("tunnel_open: TUNSIFINFO");
 		return -1;
 	}
+#endif
 
 	i = gDebug & DEBUG_TUNDEV;
 	if (ioctl (gTunnel.dev, TUNSDEBUG, &i) < 0) {
